@@ -18,12 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+#include "bsp_sht30.h"
+#include "stdio.h"
 
 /* USER CODE END Includes */
 
@@ -95,7 +97,11 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+
+  SHT30_Init();
+  HAL_Delay(100); // 等待传感器稳定
 
   /* USER CODE END 2 */
 
@@ -104,9 +110,16 @@ int main(void)
   while (1)
   {
 		
-		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    printf("Node running...\r\n");
-    HAL_Delay(500);
+    sht30_data_t sht30;
+    if (SHT30_ReadData(&sht30) == HAL_OK) {
+        printf("Temp: %.2f C, Hum: %.2f %%RH\r\n", sht30.temperature, sht30.humidity);
+    } else {
+        printf("SHT30 read error\r\n");
+    }
+
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    HAL_Delay(2000); // 2 秒采集一次
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

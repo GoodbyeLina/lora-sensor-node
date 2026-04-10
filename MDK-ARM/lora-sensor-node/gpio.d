@@ -25,5 +25,6 @@ lora-sensor-node\gpio.o: C:/Users/Rescue/STM32Cube/Repository/STM32Cube_FW_F1_V1
 lora-sensor-node\gpio.o: C:/Users/Rescue/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.7/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_cortex.h
 lora-sensor-node\gpio.o: C:/Users/Rescue/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.7/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h
 lora-sensor-node\gpio.o: C:/Users/Rescue/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.7/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h
+lora-sensor-node\gpio.o: C:/Users/Rescue/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.7/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_i2c.h
 lora-sensor-node\gpio.o: C:/Users/Rescue/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.7/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h
 lora-sensor-node\gpio.o: C:/Users/Rescue/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.7/Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
