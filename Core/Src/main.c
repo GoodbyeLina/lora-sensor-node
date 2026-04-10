@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
@@ -25,6 +26,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bsp_sht30.h"
+#include "bsp_mq2.h"
+#include "bsp_door.h"
+#include "bsp_mpu6050.h"
 #include "stdio.h"
 
 /* USER CODE END Includes */
@@ -98,9 +102,13 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   SHT30_Init();
+  Door_Init();
+  Door_SetCallback(Door_Event_Handler);
+  MPU6050_Init();
   HAL_Delay(100); // 等待传感器稳定
 
   /* USER CODE END 2 */
@@ -110,16 +118,35 @@ int main(void)
   while (1)
   {
 		
+    /* 读取 SHT30 */
     sht30_data_t sht30;
     if (SHT30_ReadData(&sht30) == HAL_OK) {
-        printf("Temp: %.2f C, Hum: %.2f %%RH\r\n", sht30.temperature, sht30.humidity);
+        printf("Temp: %.2f C, Hum: %.2f %%RH, ", sht30.temperature, sht30.humidity);
     } else {
-        printf("SHT30 read error\r\n");
+        printf("SHT30 error, ");
+    }
+
+    /* 读取 MQ-2 */
+    uint32_t mq2_adc = MQ2_GetADCValue();
+    uint8_t mq2_alarm = MQ2_GetAlarmState();
+    printf("MQ2 ADC: %lu, Alarm: %d\r\n", mq2_adc, mq2_alarm);
+
+    /* 读取 MPU6050 */
+    mpu6050_accel_t accel;
+    mpu6050_angle_t angle;
+    if (MPU6050_ReadAccel(&accel) == HAL_OK) {
+        MPU6050_ComputeAngle(&accel, &angle);
+        printf("Pitch: %.2f, Roll: %.2f, ", angle.pitch, angle.roll);
+        if (MPU6050_DetectFreeFall(&accel, 0.6f)) {
+            printf("FALL DETECTED! ");
+        }
+    } else {
+        printf("MPU6050 error, ");
     }
 
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_Delay(2000); // 2 秒采集一次
-    
+    HAL_Delay(2000);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -135,6 +162,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -164,9 +192,20 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /* USER CODE BEGIN 4 */
+
+void Door_Event_Handler(door_state_t state) {
+    // 这里可以放置报警逻辑，或发送消息到网关
+    // 目前仅打印，已在驱动中实现
+}
 
 /* USER CODE END 4 */
 
