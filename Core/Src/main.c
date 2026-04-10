@@ -29,6 +29,8 @@
 #include "bsp_mq2.h"
 #include "bsp_door.h"
 #include "bsp_mpu6050.h"
+#include "bsp_lora.h"
+#include "protocol.h"
 #include "stdio.h"
 
 /* USER CODE END Includes */
@@ -109,6 +111,7 @@ int main(void)
   Door_Init();
   Door_SetCallback(Door_Event_Handler);
   MPU6050_Init();
+  LoRa_Init();
   HAL_Delay(100); // 等待传感器稳定
 
   /* USER CODE END 2 */
@@ -118,35 +121,53 @@ int main(void)
   while (1)
   {
 		
-    /* 读取 SHT30 */
     sht30_data_t sht30;
-    if (SHT30_ReadData(&sht30) == HAL_OK) {
-        printf("Temp: %.2f C, Hum: %.2f %%RH, ", sht30.temperature, sht30.humidity);
-    } else {
-        printf("SHT30 error, ");
-    }
-
-    /* 读取 MQ-2 */
-    uint32_t mq2_adc = MQ2_GetADCValue();
-    uint8_t mq2_alarm = MQ2_GetAlarmState();
-    printf("MQ2 ADC: %lu, Alarm: %d\r\n", mq2_adc, mq2_alarm);
-
-    /* 读取 MPU6050 */
     mpu6050_accel_t accel;
     mpu6050_angle_t angle;
+    uint32_t mq2_adc;
+    uint8_t mq2_alarm;
+    door_state_t door_state;
+    sensor_frame_t frame = {0};
+
+    // 采集数据
+    if (SHT30_ReadData(&sht30) != HAL_OK) {
+        sht30.temperature = 0;
+        sht30.humidity = 0;
+    }
+    mq2_adc = MQ2_GetADCValue();
+    mq2_alarm = MQ2_GetAlarmState();
+    door_state = Door_GetState();
     if (MPU6050_ReadAccel(&accel) == HAL_OK) {
         MPU6050_ComputeAngle(&accel, &angle);
-        printf("Pitch: %.2f, Roll: %.2f, ", angle.pitch, angle.roll);
-        if (MPU6050_DetectFreeFall(&accel, 0.6f)) {
-            printf("FALL DETECTED! ");
-        }
     } else {
-        printf("MPU6050 error, ");
+        angle.pitch = 0;
+        angle.roll = 0;
     }
+
+    // 填充帧头
+    frame.header = 0xAA;
+    frame.node_id = NODE_ID;
+    frame.length = 14;
+    frame.temperature = (int16_t)(sht30.temperature * 100);
+    frame.humidity = (uint16_t)(sht30.humidity * 100);
+    frame.smoke_adc = mq2_adc;
+    frame.door_state = door_state;
+    frame.alarm_flags = (mq2_alarm ? 0x01 : 0x00) |
+                        ((door_state == DOOR_OPEN) ? 0x02 : 0x00) |
+                        (MPU6050_DetectFreeFall(&accel, 0.6f) ? 0x04 : 0x00);
+    frame.pitch = (int16_t)(angle.pitch * 100);
+    frame.roll = (int16_t)(angle.roll * 100);
+
+    // 打印调试信息
+    printf("Temp:%.2f Hum:%.2f MQ2:%lu Alarm:%d Door:%d Pitch:%.2f Roll:%.2f\r\n",
+           sht30.temperature, sht30.humidity, mq2_adc, mq2_alarm,
+           door_state, angle.pitch, angle.roll);
+
+    // 发送数据帧
+    Protocol_SendFrame(&frame);
 
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
     HAL_Delay(2000);
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
