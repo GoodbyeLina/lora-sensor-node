@@ -1,0 +1,24 @@
+--cpu Cortex-M3
+"lora-sensor-node\startup_stm32f103xb.o"
+"lora-sensor-node\main.o"
+"lora-sensor-node\gpio.o"
+"lora-sensor-node\usart.o"
+"lora-sensor-node\stm32f1xx_it.o"
+"lora-sensor-node\stm32f1xx_hal_msp.o"
+"lora-sensor-node\stm32f1xx_hal_gpio_ex.o"
+"lora-sensor-node\stm32f1xx_hal_uart.o"
+"lora-sensor-node\stm32f1xx_hal.o"
+"lora-sensor-node\stm32f1xx_hal_rcc.o"
+"lora-sensor-node\stm32f1xx_hal_rcc_ex.o"
+"lora-sensor-node\stm32f1xx_hal_gpio.o"
+"lora-sensor-node\stm32f1xx_hal_dma.o"
+"lora-sensor-node\stm32f1xx_hal_cortex.o"
+"lora-sensor-node\stm32f1xx_hal_pwr.o"
+"lora-sensor-node\stm32f1xx_hal_flash.o"
+"lora-sensor-node\stm32f1xx_hal_flash_ex.o"
+"lora-sensor-node\stm32f1xx_hal_exti.o"
+"lora-sensor-node\system_stm32f1xx.o"
+--strict --scatter "lora-sensor-node\lora-sensor-node.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "lora-sensor-node.map" -o lora-sensor-node\lora-sensor-node.axf
